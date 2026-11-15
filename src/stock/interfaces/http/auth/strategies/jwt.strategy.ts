@@ -7,7 +7,7 @@ import type { JwtPayload } from '../../../../application/auth/jwt-payload';
 
 /**
  * Valida só a assinatura do JWT emitido pelo stock-service.
- * Não consulta users/client — isso é responsabilidade do stock.
+ * Não consulta users/client — isso é responsabilidade do identity-service.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {

@@ -7,7 +7,9 @@ services:
     container_name: stock
     working_dir: /stock
     user: root
-    command: sh -c "yarn install --ignore-engines && yarn start:dev"
+    # Sem --watch: no detached o Node encerra o processo com watch + volume mount.
+    command: sh -c "yarn install --ignore-engines && yarn migrate:up && node -r ts-node/register -r tsconfig-paths/register src/main.ts"
+    restart: unless-stopped
     ports:
       - '3002:3000'
     depends_on:
