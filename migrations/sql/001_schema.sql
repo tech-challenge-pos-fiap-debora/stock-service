@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS product (
+  id UUID PRIMARY KEY,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS product_batch (
+  id UUID PRIMARY KEY,
+  product_code VARCHAR(50) NOT NULL REFERENCES product (code),
+  quantity NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  cost_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  sale_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_batch_code ON product_batch (product_code);
