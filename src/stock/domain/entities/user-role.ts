@@ -1,4 +1,4 @@
-/** Papéis emitidos pelo stock-service no JWT (mesmos valores). */
+/** Papéis emitidos pelo identity-service no JWT (mesmos valores). */
 export enum UserRole {
   ADMIN = 'admin',
   ATENDENTE = 'atendente',
