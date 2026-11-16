@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetProductBatchUseCase } from '../../../application/use-case/product-batch';
 import { CreateProductBatchUseCase } from '../../../application/use-case/product-batch/create-product-batch';
 import { UserRole } from '../../../domain/entities/user-role';
@@ -18,6 +18,8 @@ export class ProductBatchController {
 
   @Post()
   @AuthRoles(UserRole.ADMIN, UserRole.ESTOQUISTA)
+  @ApiOperation({ summary: 'Criar lote de produto' })
+  @ApiOkResponse({ type: ProductBatchResponseDto })
   async create(
     @Body() dto: CreateProductBatchDto,
   ): Promise<ProductBatchResponseDto> {
@@ -32,6 +34,8 @@ export class ProductBatchController {
 
   @Get(':codeProduct')
   @AuthRoles(UserRole.ADMIN, UserRole.ESTOQUISTA, UserRole.MECANICO)
+  @ApiOperation({ summary: 'Listar lotes por código de produto' })
+  @ApiOkResponse({ type: [ProductBatchResponseDto] })
   async findOne(
     @Param('codeProduct') codeProduct: string,
   ): Promise<ProductBatchResponseDto[]> {
