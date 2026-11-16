@@ -11,9 +11,10 @@ data:
   NODE_ENV: production
   PORT: "3000"
   SERVICE_NAME: stock-service
-  JWT_EXPIRES_IN: 1d
+  JWT_EXPIRES_IN: "1d"
   NEW_RELIC_APP_NAME: stock-service
   NEW_RELIC_LABELS: service:stock-service;component:stock
   NEW_RELIC_ENABLED: "true"
   PGSSL: "true"
   AWS_REGION: us-east-1
+  HTTP_PATH_PREFIX: /stock
