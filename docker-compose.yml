@@ -1,0 +1,95 @@
+services:
+  stock:
+    # Imagem local com Node 22 (evita pull da Docker Hub quando o registry timeout).
+    # Para buildar pelo Dockerfile: docker compose build stock
+    image: tech-challenge-api:latest
+    pull_policy: never
+    container_name: stock
+    working_dir: /stock
+    user: root
+    # Sem --watch: no detached o Node encerra o processo com watch + volume mount.
+    command: sh -c "yarn install --ignore-engines && yarn migrate:up && node -r ts-node/register -r tsconfig-paths/register src/main.ts"
+    restart: unless-stopped
+    ports:
+      - '3002:3000'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@stock-postgres:5432/stock
+      - JWT_SECRET=${JWT_SECRET:-altere-este-segredo}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1d}
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_ENDPOINT_URL=http://stock-localstack:4566
+      - SNS_TOPIC_ARN=arn:aws:sns:us-east-1:000000000000:oficina-domain-events
+      - SNS_FANOUT_ENDPOINTS=http://order-localstack:4566,http://stock-localstack:4566,http://billing-localstack:4566
+      - SQS_QUEUE_URL=http://stock-localstack:4566/000000000000/stock-events
+      - SERVICE_NAME=stock-service
+      - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME:-stock-service}
+      - NEW_RELIC_LABELS=${NEW_RELIC_LABELS:-service:stock-service;component:stock}
+      - NEW_RELIC_ENABLED=${NEW_RELIC_ENABLED:-false}
+      - PORT=3000
+    networks:
+      - oficina
+    volumes:
+      - .:/stock
+      - stock_node_modules:/stock/node_modules
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: stock-postgres
+    ports:
+      - '5434:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stock
+    volumes:
+      - stock-postgresdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d stock']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - oficina
+
+  localstack:
+    image: localstack/localstack:4.3
+    container_name: stock-localstack
+    ports:
+      - '4568:4566'
+    environment:
+      - SERVICES=sns,sqs
+      - DEBUG=0
+      - AWS_DEFAULT_REGION=us-east-1
+      - OFICINA_QUEUE_NAME=stock-events
+    volumes:
+      - stock-localstack:/var/lib/localstack
+      - ./scripts/localstack-ready.sh:/etc/localstack/init/ready.d/10-oficina-sns-sqs.sh:ro
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:4566/_localstack/health']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    networks:
+      - oficina
+
+volumes:
+  stock-postgresdata:
+  stock_node_modules:
+  stock-localstack:
+
+networks:
+  oficina:
+    name: oficina-net
+    external: true

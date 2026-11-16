@@ -1,0 +1,45 @@
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { GetProductBatchUseCase } from '../../../application/use-case/product-batch';
+import { CreateProductBatchUseCase } from '../../../application/use-case/product-batch/create-product-batch';
+import { UserRole } from '../../../domain/entities/user-role';
+import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { CreateProductBatchDto } from './dtos/create-product-batch-request.dto';
+import { ProductBatchResponseDto } from './dtos/product-batch-response.dto';
+
+@ApiTags('Estoque / Lotes')
+@ApiBearerAuth()
+@Controller('product-batch')
+export class ProductBatchController {
+  constructor(
+    private readonly createProductBatchUseCase: CreateProductBatchUseCase,
+    private readonly getProductBatchUseCase: GetProductBatchUseCase,
+  ) {}
+
+  @Post()
+  @AuthRoles(UserRole.ADMIN, UserRole.ESTOQUISTA)
+  @ApiOperation({ summary: 'Criar lote de produto' })
+  @ApiOkResponse({ type: ProductBatchResponseDto })
+  async create(
+    @Body() dto: CreateProductBatchDto,
+  ): Promise<ProductBatchResponseDto> {
+    const result = await this.createProductBatchUseCase.execute({
+      productCode: dto.productCode,
+      quantity: dto.quantity,
+      costPrice: dto.costPrice,
+      salePrice: dto.salePrice,
+    });
+    return ProductBatchResponseDto.toDtoFromCreate(result);
+  }
+
+  @Get(':codeProduct')
+  @AuthRoles(UserRole.ADMIN, UserRole.ESTOQUISTA, UserRole.MECANICO)
+  @ApiOperation({ summary: 'Listar lotes por código de produto' })
+  @ApiOkResponse({ type: [ProductBatchResponseDto] })
+  async findOne(
+    @Param('codeProduct') codeProduct: string,
+  ): Promise<ProductBatchResponseDto[]> {
+    const rows = await this.getProductBatchUseCase.execute(codeProduct);
+    return ProductBatchResponseDto.toDtoList(rows);
+  }
+}
