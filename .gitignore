@@ -30,3 +30,9 @@ lerna-debug.log*
 # macOS
 .DS_Store
 
+.env.localstack
+
+# SonarScanner local / CI
+.scannerwork/
+.jest-cache/
+jest.cov-probe.cjs

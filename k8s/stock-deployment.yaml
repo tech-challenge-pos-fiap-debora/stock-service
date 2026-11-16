@@ -18,19 +18,11 @@ spec:
         app.kubernetes.io/name: stock
         app.kubernetes.io/component: stock-service
         app.kubernetes.io/part-of: tech-challenge-pos-fiap
-
     spec:
-      initContainers:
-        - name: wait-for-postgres
-          image: busybox:1.36
-          command:
-            - sh
-            - -c
-            - until nc -z stock-postgres 5432; do echo "aguardando stock-postgres..."; sleep 2; done
       containers:
         - name: stock
           image: stock-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
               name: http
@@ -39,6 +31,25 @@ spec:
                 name: stock-config
             - secretRef:
                 name: stock-secret
+          env:
+            - name: NEW_RELIC_METADATA_KUBERNETES_CLUSTER_NAME
+              value: tech-challenge-prod
+            - name: NEW_RELIC_METADATA_KUBERNETES_NAMESPACE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NEW_RELIC_METADATA_KUBERNETES_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NEW_RELIC_METADATA_KUBERNETES_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NEW_RELIC_METADATA_KUBERNETES_DEPLOYMENT_NAME
+              value: stock
+            - name: NEW_RELIC_METADATA_KUBERNETES_CONTAINER_NAME
+              value: stock
           livenessProbe:
             httpGet:
               path: /health/live

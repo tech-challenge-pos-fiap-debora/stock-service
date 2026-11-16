@@ -53,6 +53,11 @@ export class TypeormProductBatchRepository implements ProductBatchRepositoryInte
     return rows.map((r) => this.toDomain(r));
   }
 
+  async findById(id: string): Promise<ProductBatch | null> {
+    const row = await this.repo.findOne({ where: { id } });
+    return row ? this.toDomain(row) : null;
+  }
+
   async findAvailableByCode(productCode: string): Promise<ProductBatch[]> {
     const rows = await this.repo.find({
       where: { productCode, quantity: MoreThan(0) },

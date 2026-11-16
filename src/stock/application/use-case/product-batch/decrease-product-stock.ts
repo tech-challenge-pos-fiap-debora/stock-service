@@ -71,4 +71,16 @@ export class DecreaseProductStockUseCase {
       consumptions,
     };
   }
+
+  /** Devolve quantidade a um lote (compensação da saga). */
+  async restore(batchId: string, quantity: number): Promise<void> {
+    if (quantity <= 0) return;
+    const batch = await this.productBatchRepo.findById(batchId);
+    if (!batch) {
+      throw new BusinessRuleViolationError(`Batch "${batchId}" not found`);
+    }
+    await this.productBatchRepo.updateById(batchId, {
+      quantity: batch.quantity + quantity,
+    });
+  }
 }

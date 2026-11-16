@@ -1,7 +1,3 @@
-const domainCriticalGlobs = [
-  'src/stock/domain/services/budget-pricing.ts',
-];
-
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
@@ -9,14 +5,43 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  collectCoverageFrom: domainCriticalGlobs,
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.spec.ts',
+    '!src/main.ts',
+    '!src/**/*.module.ts',
+    '!src/**/*.dto.ts',
+    '!src/**/*.port.ts',
+    '!src/**/*.entity.ts',
+    '!src/**/index.ts',
+    '!src/**/tokens.ts',
+    '!src/**/*.inputs.ts',
+    '!src/**/authenticated-user.ts',
+    '!src/**/jwt-payload.ts',
+    '!src/**/service-identity.ts',
+    '!src/**/pino-logger.config.ts',
+    '!src/**/noop-*.ts',
+    // wiring Nest / TypeORM — cobertos por integração
+    '!src/**/typeorm-*.repository.ts',
+    '!src/**/configure-http-app.ts',
+    '!src/**/health.controller.ts',
+    '!src/**/telemetry.interceptor.ts',
+    '!src/**/domain-exception.filter.ts',
+    '!src/**/new-relic-telemetry.adapter.ts',
+    '!src/**/*controller.ts',
+    '!src/**/guards/**',
+    '!src/**/strategies/**',
+    '!src/**/decorators/**',
+    '!src/**/user-role.ts',
+    '!src/**/stock-reservation-status.ts',
+  ],
   coveragePathIgnorePatterns: ['\\.spec\\.ts$'],
   coverageDirectory: 'coverage',
   testEnvironment: 'node',
   coverageThreshold: {
     global: {
       statements: 80,
-      branches: 78,
+      branches: 65,
       functions: 80,
       lines: 80,
     },

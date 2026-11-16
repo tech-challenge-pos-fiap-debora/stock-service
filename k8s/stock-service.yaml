@@ -8,11 +8,10 @@ metadata:
     app.kubernetes.io/component: stock-service
     app.kubernetes.io/part-of: tech-challenge-pos-fiap
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app.kubernetes.io/name: stock
   ports:
     - name: http
       port: 80
       targetPort: http
-      nodePort: 30082

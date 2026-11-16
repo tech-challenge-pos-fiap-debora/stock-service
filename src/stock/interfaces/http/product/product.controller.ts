@@ -7,7 +7,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   DeleteProductUseCase,
   GetAllProductUseCase,
@@ -35,6 +35,8 @@ export class ProductController {
 
   @Post()
   @AuthRoles(UserRole.ADMIN, UserRole.ESTOQUISTA)
+  @ApiOperation({ summary: 'Criar produto' })
+  @ApiOkResponse({ type: ProductResponseDto })
   async create(@Body() dto: CreateProductDto): Promise<ProductResponseDto> {
     const product = await this.createProductUseCase.execute({
       code: dto.code,
@@ -46,6 +48,8 @@ export class ProductController {
 
   @Get()
   @AuthRoles(UserRole.ADMIN, UserRole.ESTOQUISTA, UserRole.MECANICO)
+  @ApiOperation({ summary: 'Listar produtos' })
+  @ApiOkResponse({ type: [ProductResponseDto] })
   async findAll(): Promise<ProductResponseDto[]> {
     const list = await this.getAllProductUseCase.execute();
     return list.map((p) => ProductResponseDto.toDto(p));
@@ -53,6 +57,8 @@ export class ProductController {
 
   @Get(':code')
   @AuthRoles(UserRole.ADMIN, UserRole.ESTOQUISTA, UserRole.MECANICO)
+  @ApiOperation({ summary: 'Buscar produto por código' })
+  @ApiOkResponse({ type: ProductResponseDto })
   async findOne(@Param('code') code: string): Promise<ProductResponseDto> {
     const product = await this.getProductUseCase.execute(code);
     return ProductResponseDto.toDto(product);
@@ -60,6 +66,8 @@ export class ProductController {
 
   @Patch(':code')
   @AuthRoles(UserRole.ADMIN, UserRole.ESTOQUISTA)
+  @ApiOperation({ summary: 'Atualizar produto' })
+  @ApiOkResponse({ type: ProductResponseDto })
   async update(
     @Param('code') code: string,
     @Body() data: UpdateProductDto,

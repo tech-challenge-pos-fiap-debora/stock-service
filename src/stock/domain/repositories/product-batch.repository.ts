@@ -8,6 +8,7 @@ export interface ProductBatchRepositoryInterface {
   find: () => Promise<ProductBatch[]>;
   findByCodeProduct(code: string): Promise<ProductBatch[]>;
   findAvailableByCode(code: string): Promise<ProductBatch[]>;
+  findById(id: string): Promise<ProductBatch | null>;
   updateById: (
     id: string,
     dataUpdate: Partial<ProductBatchProps>,

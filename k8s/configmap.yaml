@@ -15,9 +15,6 @@ data:
   NEW_RELIC_APP_NAME: stock-service
   NEW_RELIC_LABELS: service:stock-service;component:stock
   NEW_RELIC_ENABLED: "true"
-<<<<<<< Updated upstream
-=======
   PGSSL: "true"
   AWS_REGION: us-east-1
   HTTP_PATH_PREFIX: /stock
->>>>>>> Stashed changes

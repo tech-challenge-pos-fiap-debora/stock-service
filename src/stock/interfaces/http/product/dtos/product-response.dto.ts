@@ -3,6 +3,11 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import type { Product } from '../../../../domain/entities/product';
 
 export class ProductResponseDto {
+  @ApiProperty({ description: 'Identificador do produto (UUID)' })
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
   @ApiProperty({
     description: 'Nome do produto',
     example: 'Filtro de ar',
@@ -33,6 +38,7 @@ export class ProductResponseDto {
 
   static toDto(product: Product): ProductResponseDto {
     return new ProductResponseDto({
+      id: product.id,
       code: product.code,
       name: product.name,
       description: product.description,

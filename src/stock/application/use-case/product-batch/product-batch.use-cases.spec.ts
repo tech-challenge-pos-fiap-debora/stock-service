@@ -8,7 +8,9 @@ import {
 import type { ProductRepositoryInterface } from '../../../domain/repositories/product.repository';
 import { ProductBatchRepositoryInterface } from '../../../domain/repositories/product-batch.repository';
 import { CreateProductBatchUseCase } from './create-product-batch';
+import { DecreaseProductStockUseCase } from './decrease-product-stock';
 import { GetProductBatchUseCase } from './get-product-batch';
+import { GetProductStockUseCase } from './get-product-stock';
 
 class InMemoryProductRepository implements ProductRepositoryInterface {
   public products = new Map<string, Product>();
@@ -54,6 +56,10 @@ class InMemoryProductBatchRepository implements ProductBatchRepositoryInterface 
         (batch) => batch.productCode === productCode,
       ),
     );
+  }
+
+  findById(id: string): Promise<ProductBatch | null> {
+    return Promise.resolve(this.batches.get(id) ?? null);
   }
 
   findAvailableByCode(productCode: string): Promise<ProductBatch[]> {
@@ -157,5 +163,45 @@ describe('Product batch use cases', () => {
     expect(response).toHaveLength(1);
     expect(response[0].batch.productCode).toBe('FILTRO01');
     expect(response[0].productName).toBe('Filtro');
+  });
+
+  it('decreases stock FIFO and restores batch', async () => {
+    const repository = new InMemoryProductBatchRepository();
+    const batch = ProductBatch.create(
+      {
+        productCode: 'OLEO',
+        quantity: 5,
+        costPrice: 10,
+        salePrice: 20,
+      },
+      'batch-1',
+    );
+    await repository.create(batch);
+    const decrease = new DecreaseProductStockUseCase(repository);
+
+    const result = await decrease.execute('OLEO', 3);
+    expect(result.totalConsumed).toBe(3);
+    expect(result.consumptions[0].batchId).toBe('batch-1');
+    expect((await repository.findById('batch-1'))?.quantity).toBe(2);
+
+    await decrease.restore('batch-1', 3);
+    expect((await repository.findById('batch-1'))?.quantity).toBe(5);
+
+    await expect(decrease.execute('OLEO', 0)).rejects.toThrow(/greater than zero/);
+    await expect(decrease.execute('OLEO', 99)).rejects.toThrow(/Insufficient/);
+  });
+
+  it('gets available product stock', async () => {
+    const repository = new InMemoryProductBatchRepository();
+    await repository.create(
+      ProductBatch.create({
+        productCode: 'OLEO',
+        quantity: 4,
+        costPrice: 1,
+        salePrice: 2,
+      }),
+    );
+    const stock = await new GetProductStockUseCase(repository).execute('OLEO');
+    expect(stock).toEqual({ productCode: 'OLEO', available: 4 });
   });
 });

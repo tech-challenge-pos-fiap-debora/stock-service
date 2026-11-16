@@ -1,0 +1,8 @@
+export enum StockReservationStatus {
+  PENDING = 'PENDING',
+  RESERVED = 'RESERVED',
+  CONFIRMED = 'CONFIRMED',
+  RELEASED = 'RELEASED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+}
