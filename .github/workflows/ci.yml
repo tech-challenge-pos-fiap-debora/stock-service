@@ -61,11 +61,33 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      # shortcut: na main o Sonar devolve NONE sem período de new code; aí valem os limiares do Sonar way no código inteiro. Quando o status vier OK/ERROR, esse fallback não roda.
       - name: Quality Gate SonarCloud
-        uses: SonarSource/sonarqube-quality-gate-action@v1.2.1
-        timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: oficina-pos-fiap_stock-service
+        run: |
+          set -euo pipefail
+          meta=.scannerwork/report-task.txt
+          server=$(sed -n 's/^serverUrl=//p' "$meta")
+          ce=$(sed -n 's/^ceTaskUrl=//p' "$meta")
+          st=PENDING
+          for _ in $(seq 1 60); do
+            st=$(curl -fsS -u "$SONAR_TOKEN:" "$ce" | jq -r '.task.status')
+            if [ "$st" = SUCCESS ]; then break; fi
+            if [ "$st" = FAILED ] || [ "$st" = CANCELED ]; then echo "análise Sonar $st"; exit 1; fi
+            sleep 5
+          done
+          if [ "$st" != SUCCESS ]; then echo "análise Sonar não terminou: $st"; exit 1; fi
+          id=$(curl -fsS -u "$SONAR_TOKEN:" "$ce" | jq -r '.task.analysisId')
+          qg=$(curl -fsS -u "$SONAR_TOKEN:" "$server/api/qualitygates/project_status?analysisId=$id" | jq -r '.projectStatus.status')
+          echo "quality gate: $qg"
+          if [ "$qg" = OK ] || [ "$qg" = WARN ]; then exit 0; fi
+          if [ "$qg" = ERROR ]; then echo "Quality Gate falhou"; exit 1; fi
+          if [ "${GITHUB_EVENT_NAME:-}" != push ]; then echo "Quality Gate não calculado ($qg)"; exit 1; fi
+          curl -fsS -u "$SONAR_TOKEN:" \
+            "$server/api/measures/component?component=$SONAR_PROJECT_KEY&branch=main&metricKeys=coverage,duplicated_lines_density,reliability_rating,security_rating,sqale_rating,security_hotspots_reviewed" \
+            | jq -e 'def n($k): (.component.measures[] | select(.metric==$k) | .value | tonumber); (n("coverage") >= 80) and (n("duplicated_lines_density") <= 3) and (n("reliability_rating") <= 1) and (n("security_rating") <= 1) and (n("sqale_rating") <= 1) and (n("security_hotspots_reviewed") >= 100)'
 
       - name: Upload coverage (stock-service)
         if: always()
